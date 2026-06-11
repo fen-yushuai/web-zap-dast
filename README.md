@@ -207,7 +207,7 @@ ZAP_TIMEOUT="300m"            # 最大扫描时长
 ZAP_API_DOCS_URL=""           # API 文档完整地址，设置后自动切换为 API scan
 
 # 平台
-DOCKER_PLATFORM="linux/arm64"  # Apple Silicon 原生
+DOCKER_PLATFORM="linux/amd64"  # 默认 amd64，Apple Silicon 可改为 linux/arm64
 ```
 
 ## 常见问题
@@ -237,6 +237,18 @@ ZAP 镜像在 GitHub Container Registry，部分地区访问慢。可换成 Dock
 # 修改 config.sh
 ZAP_IMAGE="zaproxy/zap-stable:latest"
 ```
+
+### Apple Silicon 如何切换 arm64
+
+修改 `config.sh`：
+```bash
+DOCKER_PLATFORM="linux/arm64"
+```
+
+可能的问题：
+- 部分镜像没有 arm64 版本，会自动走 Rosetta 模拟（性能下降）
+- ZAP 的 DomXSS 规则在 arm64 上兼容性差，已默认禁用
+- 如果拉取镜像报错，改回 `linux/amd64`
 
 ### Nuclei exit code 1
 

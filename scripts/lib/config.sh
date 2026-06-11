@@ -2,8 +2,9 @@
 # Central configuration for DAST pipeline
 
 # --- Platform ---
-# Explicit arm64 to override DOCKER_DEFAULT_PLATFORM=linux/amd64 if set
-DOCKER_PLATFORM="linux/arm64"
+# 默认 linux/amd64，Apple Silicon 用户可改为 linux/arm64（原生性能更好）
+# 注意：部分镜像（如 ZAP）可能没有 arm64 版本，切换后可能需要走 Rosetta 模拟
+DOCKER_PLATFORM="linux/amd64"
 
 # --- Target ---
 # 扫描目标 URL，如 TARGET_URL="https://example.com"
