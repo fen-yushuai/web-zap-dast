@@ -1,6 +1,6 @@
 # DAST Pipeline
 
-基于 Nuclei + OWASP ZAP 的动态应用安全测试平台。
+基于 OWASP ZAP 的动态应用安全测试平台，支持 Spider 爬取 + 主动扫描。
 
 ## 前置条件
 
@@ -10,7 +10,7 @@
 ## 快速开始
 
 ```bash
-# 1. 安装依赖（拉取 Docker 镜像、下载 Nuclei 模板）
+# 1. 安装依赖（拉取 Docker 镜像）
 ./scripts/setup.sh
 
 # 2. 配置目标 URL
@@ -25,35 +25,28 @@
 ### `dast.sh` — 主入口
 
 ```bash
-./dast.sh                    # 完整流程（Nuclei + ZAP）
+./dast.sh                    # 完整流程（Spider 爬取 + ZAP 扫描）
 ./dast.sh --setup            # 仅安装依赖
-./dast.sh --scan nuclei      # 仅运行 Nuclei（快，2-5 分钟）
-./dast.sh --scan zap         # 仅运行 ZAP（视目标复杂度）
+./dast.sh --scan spider      # 仅运行 Spider 爬取（网站认知）
+./dast.sh --scan zap         # 仅运行 ZAP 扫描
 ./dast.sh --report-only DIR  # 从已有扫描数据重新生成报告
 ```
 
-### `scripts/setup.sh` — 依赖安装
+### `scripts/zap-spider.sh` — Spider 爬取
+
+先爬取目标网站，发现所有可访问的 URL，再交给 ZAP 扫描。
 
 ```bash
-./scripts/setup.sh                 # 安装依赖并更新 Nuclei 模板
-./scripts/setup.sh --skip-update   # 跳过模板更新（更快）
+./scripts/zap-spider.sh                        # 默认配置爬取
+./scripts/zap-spider.sh --max-duration 10      # 爬取 10 分钟
+./scripts/zap-spider.sh --max-depth 10         # 最大深度 10 层
+./scripts/zap-spider.sh --ajax                 # 启用 Ajax Spider（SPA 需要）
 ```
 
-安装内容：
-- `projectdiscovery/nuclei:latest` — Nuclei 扫描器，基于模板匹配已知漏洞、配置问题、信息泄露
-- `zaproxy/zap-stable` — OWASP ZAP 扫描器，爬取 + 主动扫描，检测 XSS、SQL 注入、CSRF 等
-- Nuclei 社区模板（~13000+ 条规则）
-
-### `scripts/scan-nuclei.sh` — Nuclei 扫描
-
-```bash
-./scripts/scan-nuclei.sh                          # 默认配置扫描
-./scripts/scan-nuclei.sh --severity critical,high  # 只扫高危
-./scripts/scan-nuclei.sh --tags sqli,xss           # 指定模板标签
-./scripts/scan-nuclei.sh --rate-limit 50           # 降低请求速率
-```
-
-输出格式：JSONL + SARIF
+输出：
+- `zap-spider-urls.txt` — 发现的所有 URL（每行一个）
+- `zap-sitemap.txt` — 站点树结构
+- `zap-spider-summary.txt` — 爬取统计摘要
 
 ### `scripts/scan-zap.sh` — ZAP 扫描
 
@@ -68,108 +61,131 @@
 - **full** — 传统爬虫 + 主动扫描，覆盖 UI 和 API，耗时长
 - **api** — 直接读 OpenAPI/Swagger 文档，快速精准，30 秒左右
 
-## 扫描类型说明
+## 扫描流程
 
-| 工具 | 扫描方式 | 适用场景 | 耗时 |
-|------|----------|----------|------|
-| Nuclei | 模板匹配 | 已知漏洞、配置问题、信息泄露 | 2-5 分钟 |
-| ZAP full | 爬虫 + 主动扫描 | UI + API 全面覆盖 | 10-60+ 分钟 |
-| ZAP API | 读 OpenAPI 文档 | 纯 API 接口 | 30 秒-5 分钟 |
+```
+Target URL
+    │
+    ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Spider    │────▶│  ZAP Scan   │────▶│   Report    │
+│  爬取发现   │     │  主动扫描   │     │  汇总报告   │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
 
-### 选择建议
-
-- **有 OpenAPI 文档** → ZAP API scan
-- **前后端分离 SPA** → ZAP full scan（或 Nuclei 补充）
-- **传统后端渲染网站** → ZAP full scan
-- **快速检查已知漏洞** → Nuclei
-- **全面覆盖** → Nuclei + ZAP full scan
+1. **Spider 阶段**：爬取目标网站，发现所有可访问的 URL 和站点结构
+2. **Scan 阶段**：对发现的 URL 进行主动安全扫描（XSS、SQL 注入、CSRF 等）
+3. **Report 阶段**：汇总扫描结果，生成 HTML/JSON/XML 报告
 
 ## 常见场景
 
-### 场景 1：扫描有 OpenAPI 文档的 API
+### 场景 1：扫描有 OpenAPI 文档的 API ✅ 已验证
 
 ```bash
 # 修改 config.sh
 TARGET_URL="https://api.example.com"
 ZAP_API_DOCS_URL="https://api.example.com/v2/swagger.json"
 
-# 运行（自动切换为 API scan）
+# 运行（自动切换为 API scan，跳过 spider）
 ./dast.sh --scan zap
 ```
+> 已测试靶场：OWASP Juice Shop（Swagger JSON），31 个 URL，22 秒完成
 
-### 场景 2：扫描传统网站（有 UI 页面）
+### 场景 2：扫描传统网站
 
 ```bash
 # 修改 config.sh
 TARGET_URL="https://your-website.com"
 
-# 运行（full scan 会爬取页面，耗时较长）
-./scripts/scan-zap.sh --scan-type full --timeout 30m
+# 完整流程：spider 爬取 + ZAP 扫描
+./dast.sh
 ```
 
-注意：full scan 在 Docker 内有 DomXSS 浏览器兼容问题，如果卡住可缩短超时：
-```bash
-./scripts/scan-zap.sh --scan-type full --timeout 10m
-```
+### 场景 3：扫描 SPA（单页应用）✅ 已验证
 
-### 场景 3：扫描 SPA（单页应用）
-
-SPA 页面靠 JS 渲染，传统爬虫爬不到。用 Nuclei + ZAP full scan 组合：
+SPA 页面靠 JS 渲染，传统爬虫爬不到，需要 Ajax Spider：
 
 ```bash
 # 修改 config.sh
 TARGET_URL="https://your-spa.com"
+ZAP_SPIDER_AJAX_ENABLED=true
 
-# Nuclei 扫描（模板匹配，不依赖爬虫）
-./scripts/scan-nuclei.sh
-
-# ZAP full scan（内部有 Ajax Spider 可爬 SPA）
-./scripts/scan-zap.sh --scan-type full --timeout 20m
+# 运行
+./dast.sh
 ```
 
-### 场景 4：只扫高危漏洞（快速）
+或命令行：
+```bash
+./scripts/zap-spider.sh --ajax --max-duration 10
+```
+> 已测试靶场：OWASP Juice Shop（Angular SPA），传统 19 URL + Ajax 发现共 75 URL
+
+### 场景 4：只看爬取结果（不做扫描）
+
+```bash
+./dast.sh --scan spider
+# 查看发现的 URL
+cat reports/<timestamp>/zap-spider-urls.txt
+```
+
+### 场景 5：降低扫描速率（避免被封）
 
 ```bash
 # config.sh
-NUCLEI_SEVERITY="critical,high"
+ZAP_SPIDER_MAX_DURATION=2    # 缩短爬取时间
+ZAP_SPIDER_MAX_DEPTH=2       # 减少爬取深度
 
 # 或运行时传参
-./scripts/scan-nuclei.sh --severity critical,high
+./scripts/zap-spider.sh --max-duration 2 --max-depth 2
 ```
 
-### 场景 5：指定 Nuclei 模板标签
+### 场景 6：需要登录的网站
 
+修改 `config.sh`，根据登录方式配置认证信息：
+
+**API Token 登录** ✅ 已验证：
 ```bash
-./scripts/scan-nuclei.sh --tags sqli           # SQL 注入
-./scripts/scan-nuclei.sh --tags xss            # XSS
-./scripts/scan-nuclei.sh --tags "sqli,xss,rce" # 多个标签
-
-# 常用标签：sqli, xss, rce, ssrf, lfi, csti, default-login, exposure
+ZAP_AUTH_TYPE="api"
+ZAP_AUTH_API_URL="https://example.com/api/login"
+ZAP_AUTH_API_BODY='{"username":"__USERNAME__","password":"__PASSWORD__"}'
+ZAP_AUTH_USERNAME="testuser"
+ZAP_AUTH_PASSWORD="testpass"
+ZAP_AUTH_API_TOKEN_PATH="data.token"   # token 在 JSON 响应中的路径
+ZAP_AUTH_API_TOKEN_LOCATION="header"   # header 或 cookie
+ZAP_AUTH_API_TOKEN_HEADER="Authorization"
+ZAP_AUTH_API_TOKEN_PREFIX="Bearer "
 ```
+> 已测试靶场：OWASP Juice Shop（JWT 认证）
 
-### 场景 6：降低扫描速率（避免被封）
-
+**简单表单登录** ✅ 已验证：
 ```bash
-# config.sh
-NUCLEI_RATE_LIMIT=20    # 从 100 降到 20 请求/秒
-NUCLEI_CONCURRENCY=5    # 从 25 降到 5 并发
-
-# 或运行时传参
-./scripts/scan-nuclei.sh --rate-limit 20
+ZAP_AUTH_TYPE="form"
+ZAP_AUTH_LOGIN_URL="https://example.com/login"
+ZAP_AUTH_USERNAME_FIELD="login"         # 表单中用户名字段的 name
+ZAP_AUTH_PASSWORD_FIELD="password"      # 表单中密码字段的 name
+ZAP_AUTH_USERNAME="admin"
+ZAP_AUTH_PASSWORD="admin"
+ZAP_AUTH_LOGGED_IN_INDICATOR="Welcome"  # 登录成功后页面包含的文字
+ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"   # 登录失败后页面包含的文字
 ```
+> 已测试靶场：自建 PHP 表单登录应用（无 CSRF token）
+> 适用于无 CSRF token 保护的简单登录页
 
-### 场景 7：更新 Nuclei 模板
-
+**带 CSRF 的表单登录** ❌ 不支持：
 ```bash
-./scripts/setup.sh              # 更新模板 + 拉取镜像
-./scripts/setup.sh --skip-update  # 跳过模板更新
+# ZAP 内置表单认证不支持自动获取 CSRF token
+# 需使用 script-based authentication 或 browser-based authentication
+# 已知不支持的靶场：DVWA
 ```
+> 需要自定义脚本处理 CSRF token，或使用 ZAP 的浏览器认证模式
 
-手动更新：
+**HTTP Basic 登录** ✅ 已验证：
 ```bash
-docker run --rm -v ~/nuclei-templates:/root/nuclei-templates \
-  projectdiscovery/nuclei:latest -update-templates
+ZAP_AUTH_TYPE="http-basic"
+ZAP_AUTH_BASIC_USERNAME="admin"
+ZAP_AUTH_BASIC_PASSWORD="admin123"
 ```
+> 已测试靶场：httpbin（`/basic-auth/admin/password` 端点）
 
 ## 报告
 
@@ -177,9 +193,9 @@ docker run --rm -v ~/nuclei-templates:/root/nuclei-templates \
 
 ```
 reports/20260610_160214/
-├── nuclei-results.json      # Nuclei 发现（JSONL）
-├── nuclei-results.sarif     # Nuclei 发现（SARIF，可导入 IDE/GitHub）
-├── nuclei-summary.txt       # Nuclei 按 severity 汇总
+├── zap-spider-urls.txt      # Spider 发现的 URL 列表
+├── zap-sitemap.txt          # 站点树结构
+├── zap-spider-summary.txt   # Spider 爬取统计
 ├── zap-report.html          # ZAP 报告（HTML，浏览器打开）
 ├── zap-report.json          # ZAP 发现（JSON）
 ├── zap-report.xml           # ZAP 发现（XML）
@@ -194,31 +210,37 @@ reports/20260610_160214/
 ```bash
 # 扫描目标
 TARGET_URL=""                          # 扫描目标 URL（必填）
-NUCLEI_URL_LIST=""                     # Nuclei URL 列表文件路径（可选）
-
-# Nuclei
-NUCLEI_SEVERITY="critical,high,medium,low"  # 扫描级别
-NUCLEI_RATE_LIMIT=100                        # 请求/秒
-NUCLEI_CONCURRENCY=25                        # 并发模板数
 
 # ZAP
 ZAP_MIN_ALERT_LEVEL="WARN"   # 最低告警级别
 ZAP_TIMEOUT="300m"            # 最大扫描时长
 ZAP_API_DOCS_URL=""           # API 文档完整地址，设置后自动切换为 API scan
 
+# ZAP Spider
+ZAP_SPIDER_MAX_DURATION=5    # 爬取最大时长（分钟）
+ZAP_SPIDER_MAX_DEPTH=5       # 最大爬取深度
+ZAP_SPIDER_AJAX_ENABLED=false # 是否启用 Ajax Spider（SPA 页面需要）
+ZAP_SPIDER_AJAX_MAX_DURATION=5 # Ajax Spider 最大时长（分钟）
+
+# 认证（详见"场景 6"）
+ZAP_AUTH_TYPE="none"          # form / api / http-basic / none
+# 表单登录相关
+ZAP_AUTH_LOGIN_URL=""
+ZAP_AUTH_USERNAME=""
+ZAP_AUTH_PASSWORD=""
+# API 登录相关
+ZAP_AUTH_API_URL=""
+ZAP_AUTH_API_BODY=""
+ZAP_AUTH_API_TOKEN_PATH=""
+# HTTP Basic 相关
+ZAP_AUTH_BASIC_USERNAME=""
+ZAP_AUTH_BASIC_PASSWORD=""
+
 # 平台
 DOCKER_PLATFORM="linux/amd64"  # 默认 amd64，Apple Silicon 可改为 linux/arm64
 ```
 
 ## 常见问题
-
-### Nuclei 报 "no templates provided"
-
-模板未下载，运行：
-```bash
-docker run --rm -v ~/nuclei-templates:/root/nuclei-templates \
-  projectdiscovery/nuclei:latest -update-templates
-```
 
 ### ZAP 报 "Level must be one of [...]"
 
@@ -230,13 +252,11 @@ DomXSS 规则在 Docker 内跑 Firefox 有兼容性问题。建议：
 - 改用 `--scan-type api`（需 OpenAPI 文档）
 - 或缩短超时 `--timeout 10m`
 
-### ghcr.io 拉取超时
+### Spider 爬不到页面
 
-ZAP 镜像在 GitHub Container Registry，部分地区访问慢。可换成 Docker Hub 版本：
-```bash
-# 修改 config.sh
-ZAP_IMAGE="zaproxy/zap-stable:latest"
-```
+- SPA 页面需要启用 Ajax Spider：`ZAP_SPIDER_AJAX_ENABLED=true`
+- 增加爬取深度：`ZAP_SPIDER_MAX_DEPTH=10`
+- 增加爬取时间：`ZAP_SPIDER_MAX_DURATION=15`
 
 ### Apple Silicon 如何切换 arm64
 
@@ -249,7 +269,3 @@ DOCKER_PLATFORM="linux/arm64"
 - 部分镜像没有 arm64 版本，会自动走 Rosetta 模拟（性能下降）
 - ZAP 的 DomXSS 规则在 arm64 上兼容性差，已默认禁用
 - 如果拉取镜像报错，改回 `linux/amd64`
-
-### Nuclei exit code 1
-
-Nuclei 找到漏洞时返回 1，这是正常行为（0 = 无发现，1 = 有发现，2+ = 错误）。

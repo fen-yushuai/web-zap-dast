@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # DAST Pipeline - Main orchestration script
 # Usage:
-#   ./dast.sh                    # Full pipeline (Nuclei + ZAP)
+#   ./dast.sh                    # Full pipeline (Spider + ZAP scan)
 #   ./dast.sh --setup            # Install dependencies only
-#   ./dast.sh --scan nuclei      # Run Nuclei only
-#   ./dast.sh --scan zap         # Run ZAP only
+#   ./dast.sh --scan spider      # Run spider reconnaissance only
+#   ./dast.sh --scan zap         # Run ZAP scan only
 #   ./dast.sh --report-only DIR  # Regenerate report from existing data
 
 set -euo pipefail
@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
     --scan)        SCAN_ONLY="$2"; shift 2 ;;
     --report-only) REPORT_ONLY="$2"; shift 2 ;;
     -h|--help)
-      echo "Usage: $0 [--setup] [--scan nuclei|zap] [--report-only DIR]"
+      echo "Usage: $0 [--setup] [--scan spider|zap] [--report-only DIR]"
       exit 0
       ;;
     *) log_error "Unknown option: $1"; exit 1 ;;
@@ -40,10 +40,6 @@ step_setup() {
   fi
   if ! check_command docker || ! docker info &>/dev/null; then
     log_error "Docker not available. Run: ./scripts/setup.sh"
-    exit 1
-  fi
-  if ! docker image inspect "${NUCLEI_IMAGE}" &>/dev/null; then
-    log_error "Nuclei image not found. Run: ./scripts/setup.sh"
     exit 1
   fi
   if ! docker image inspect "${ZAP_IMAGE}" &>/dev/null; then
@@ -79,16 +75,16 @@ main() {
   ensure_dir "${REPORT_DIR}"
 
   # Scans
-  NUCLEI_OK=true
+  SPIDER_OK=true
   ZAP_OK=true
 
-  if [[ -z "$SCAN_ONLY" ]] || [[ "$SCAN_ONLY" == "nuclei" ]]; then
-    log_info "Running Nuclei scan..."
-    if "${SCRIPT_DIR}/scripts/scan-nuclei.sh" --report-dir "${REPORT_DIR}"; then
-      log_success "Nuclei scan completed"
+  if [[ -z "$SCAN_ONLY" ]] || [[ "$SCAN_ONLY" == "spider" ]]; then
+    log_info "Running Spider reconnaissance..."
+    if "${SCRIPT_DIR}/scripts/zap-spider.sh" --report-dir "${REPORT_DIR}"; then
+      log_success "Spider reconnaissance completed"
     else
-      log_error "Nuclei scan failed"
-      NUCLEI_OK=false
+      log_error "Spider reconnaissance failed"
+      SPIDER_OK=false
     fi
   fi
 
@@ -112,7 +108,7 @@ main() {
   log_info "  Pipeline Complete"
   log_info "=========================================="
   log_info "Report: ${REPORT_DIR}"
-  [[ "$NUCLEI_OK" == true ]] && log_success "Nuclei: OK" || log_error "Nuclei: FAILED"
+  [[ "$SPIDER_OK" == true ]] && log_success "Spider: OK" || log_error "Spider: FAILED"
   [[ "$ZAP_OK" == true ]]    && log_success "ZAP:    OK" || log_error "ZAP:    FAILED"
 }
 

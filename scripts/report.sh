@@ -34,16 +34,13 @@ log_info "Report dir: ${REPORT_DIR}"
   echo "- **Directory**: ${REPORT_DIR}"
   echo ""
 
-  # Nuclei section
-  echo "## Nuclei Findings"
+  # Spider section
+  echo "## Spider Reconnaissance"
   echo ""
-  if [[ -f "${REPORT_DIR}/nuclei-summary.txt" ]]; then
-    # Skip header lines, include findings table
-    sed -n '/Findings by Severity/,/^$/p' "${REPORT_DIR}/nuclei-summary.txt" | grep -v "Findings by Severity" | grep -v "^$" || echo "No findings"
-    echo ""
-    echo "Full report: \`nuclei-results.json\` / \`nuclei-results.sarif\`"
+  if [[ -f "${REPORT_DIR}/zap-spider-summary.txt" ]]; then
+    sed -n '/^--- Results ---$/,/^--- Configuration ---$/p' "${REPORT_DIR}/zap-spider-summary.txt" | grep -v "^---" | grep -v "^$" || echo "No results"
   else
-    echo "_Scan not run or no results_"
+    echo "_Spider not run or no results_"
   fi
   echo ""
 
@@ -64,8 +61,8 @@ log_info "Report dir: ${REPORT_DIR}"
   echo ""
   echo "| File | Description |"
   echo "|------|-------------|"
-  echo "| \`nuclei-results.json\` | Nuclei findings (JSON) |"
-  echo "| \`nuclei-results.sarif\` | Nuclei findings (SARIF) |"
+  echo "| \`zap-spider-urls.txt\` | Spider discovered URLs |"
+  echo "| \`zap-sitemap.txt\` | Site tree structure |"
   echo "| \`zap-report.html\` | ZAP report (HTML) |"
   echo "| \`zap-report.json\` | ZAP findings (JSON) |"
   echo "| \`zap-report.xml\` | ZAP findings (XML) |"
