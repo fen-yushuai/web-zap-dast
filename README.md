@@ -73,18 +73,7 @@ ZAP_SPIDER_AJAX_ENABLED=true
 cat reports/<timestamp>/zap-spider-urls.txt
 ```
 
-### 场景 5：降低扫描速率（避免被封）
-
-```bash
-# config.sh
-ZAP_SPIDER_MAX_DURATION=2    # 缩短爬取时间
-ZAP_SPIDER_MAX_DEPTH=2       # 减少爬取深度
-
-# 或运行时传参
-./scripts/zap-spider.sh --max-duration 2 --max-depth 2
-```
-
-### 场景 6：需要登录的网站
+### 场景 5：需要登录的网站
 
 修改 `config.sh`，根据登录方式配置认证信息：
 
@@ -138,6 +127,17 @@ ZAP_AUTH_BASIC_USERNAME="admin"
 ZAP_AUTH_BASIC_PASSWORD="admin123"
 ```
 > 已测试靶场：httpbin（`/basic-auth/admin/password` 端点）
+
+### 场景 6：降低扫描速率（避免被封）
+
+```bash
+# config.sh
+ZAP_SPIDER_MAX_DURATION=2    # 缩短爬取时间
+ZAP_SPIDER_MAX_DEPTH=2       # 减少爬取深度
+
+# 或运行时传参
+./scripts/zap-spider.sh --max-duration 2 --max-depth 2
+```
 
 ## 命令说明
 
