@@ -252,12 +252,12 @@ main() {
   log_info "Generating summary..."
   if [[ -f "$REPORT_JSON" ]] && [[ -s "$REPORT_JSON" ]]; then
     {
-      echo "=== ZAP Scan Summary ==="
-      echo "Target: ${TARGET_URL}"
-      echo "Type:   ${SCAN_TYPE}"
-      echo "Date:   $(date '+%Y-%m-%d %H:%M:%S')"
+      echo "=== ZAP 扫描汇总 ==="
+      echo "目标: ${TARGET_URL}"
+      echo "类型: ${SCAN_TYPE}"
+      echo "日期: $(date '+%Y-%m-%d %H:%M:%S')"
       echo ""
-      echo "--- Alerts by Risk Level ---"
+      echo "--- 按风险级别统计 ---"
       jq -r '
         [.alerts[]?] | group_by(.risk)
         | map({risk: .[0].risk, count: length})
@@ -266,8 +266,8 @@ main() {
         | "\(.risk): \(.count)"
       ' "${REPORT_JSON}" 2>/dev/null || echo "No alerts or parse error"
       echo ""
-      echo "HTML report: ${REPORT_HTML}"
-      echo "JSON report: ${REPORT_JSON}"
+      echo "HTML 报告: ${REPORT_HTML}"
+      echo "JSON 报告: ${REPORT_JSON}"
     } | tee "${REPORT_SUMMARY}"
   else
     echo "No results (check ${REPORT_LOG} for details)" | tee "${REPORT_SUMMARY}"

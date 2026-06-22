@@ -184,24 +184,24 @@ zap_curl "${ZAP_API_BASE}/JSON/core/view/sitemap/" | jq -r '.siteList[]?' 2>/dev
 
 # --- Generate summary ---
 {
-  echo "=== ZAP Spider Summary ==="
-  echo "Target:           ${ZAP_SPIDER_TARGET}"
-  echo "Date:             $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "=== ZAP Spider 爬取汇总 ==="
+  echo "目标:           ${ZAP_SPIDER_TARGET}"
+  echo "日期:           $(date '+%Y-%m-%d %H:%M:%S')"
   echo ""
-  echo "--- Results ---"
-  echo "Traditional spider: ${TRADITIONAL_URLS} URLs"
+  echo "--- 结果 ---"
+  echo "传统 Spider:      ${TRADITIONAL_URLS} URLs"
   if [[ "$AJAX_ENABLED" == true ]]; then
-    echo "Ajax spider:        ${AJAX_URLS} URLs"
+    echo "Ajax Spider:      ${AJAX_URLS} URLs"
   fi
-  echo "All URLs in ZAP session: ${TOTAL_URLS} (includes auth, redirects, resources)"
+  echo "ZAP 会话全部 URL: ${TOTAL_URLS}（含认证、重定向、资源）"
   echo ""
-  echo "--- Configuration ---"
-  echo "Max depth:      ${MAX_DEPTH}"
-  echo "Max duration:   ${MAX_DURATION} min"
-  echo "Ajax spider:    ${AJAX_ENABLED}"
+  echo "--- 配置 ---"
+  echo "最大深度:     ${MAX_DEPTH}"
+  echo "最大时长:     ${MAX_DURATION} 分钟"
+  echo "Ajax Spider:  ${AJAX_ENABLED}"
   echo ""
-  echo "URL list:  zap-spider-urls.txt"
-  echo "Sitemap:   zap-sitemap.txt"
+  echo "URL 列表: zap-spider-urls.txt"
+  echo "站点树:   zap-sitemap.txt"
 } | tee "${SUMMARY_FILE}"
 
 log_success "=== Spider reconnaissance complete ==="

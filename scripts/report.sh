@@ -27,45 +27,45 @@ log_info "Report dir: ${REPORT_DIR}"
 
 # --- Build summary ---
 {
-  echo "# DAST Scan Report"
+  echo "# DAST 扫描报告"
   echo ""
-  echo "- **Date**: $(date '+%Y-%m-%d %H:%M:%S')"
-  echo "- **Target**: ${TARGET_URL}"
-  echo "- **Directory**: ${REPORT_DIR}"
+  echo "- **日期**: $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "- **目标**: ${TARGET_URL}"
+  echo "- **目录**: ${REPORT_DIR}"
   echo ""
 
   # Spider section
-  echo "## Spider Reconnaissance"
+  echo "## Spider 爬取结果"
   echo ""
   if [[ -f "${REPORT_DIR}/zap-spider-summary.txt" ]]; then
-    sed -n '/^--- Results ---$/,/^--- Configuration ---$/p' "${REPORT_DIR}/zap-spider-summary.txt" | grep -v "^---" | grep -v "^$" || echo "No results"
+    sed -n '/^--- Results ---$/,/^--- Configuration ---$/p' "${REPORT_DIR}/zap-spider-summary.txt" | grep -v "^---" | grep -v "^$" || echo "无结果"
   else
-    echo "_Spider not run or no results_"
+    echo "_未运行 Spider 或无结果_"
   fi
   echo ""
 
   # ZAP section
-  echo "## ZAP Findings"
+  echo "## ZAP 扫描发现"
   echo ""
   if [[ -f "${REPORT_DIR}/zap-summary.txt" ]]; then
-    sed -n '/Alerts by Risk Level/,/^$/p' "${REPORT_DIR}/zap-summary.txt" | grep -v "Alerts by Risk Level" | grep -v "^$" || echo "No alerts"
+    sed -n '/Alerts by Risk Level/,/^$/p' "${REPORT_DIR}/zap-summary.txt" | grep -v "Alerts by Risk Level" | grep -v "^$" || echo "无告警"
     echo ""
-    echo "Full report: \`zap-report.html\` / \`zap-report.json\`"
+    echo "完整报告: \`zap-report.html\` / \`zap-report.json\`"
   else
-    echo "_Scan not run or no results_"
+    echo "_未运行扫描或无结果_"
   fi
   echo ""
 
   # File listing
-  echo "## Report Files"
+  echo "## 报告文件"
   echo ""
-  echo "| File | Description |"
-  echo "|------|-------------|"
-  echo "| \`zap-spider-urls.txt\` | Spider discovered URLs |"
-  echo "| \`zap-sitemap.txt\` | Site tree structure |"
-  echo "| \`zap-report.html\` | ZAP report (HTML) |"
-  echo "| \`zap-report.json\` | ZAP findings (JSON) |"
-  echo "| \`zap-report.xml\` | ZAP findings (XML) |"
+  echo "| 文件 | 说明 |"
+  echo "|------|------|"
+  echo "| \`zap-spider-urls.txt\` | Spider 发现的 URL 列表 |"
+  echo "| \`zap-sitemap.txt\` | 站点树结构 |"
+  echo "| \`zap-report.html\` | ZAP 报告（HTML） |"
+  echo "| \`zap-report.json\` | ZAP 发现（JSON） |"
+  echo "| \`zap-report.xml\` | ZAP 发现（XML） |"
 } > "${SUMMARY}"
 
 log_success "=== Report generated ==="
