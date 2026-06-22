@@ -32,6 +32,9 @@ setup_zap_auth() {
     form)
       setup_form_auth "$api_url"
       ;;
+    form-csrf)
+      setup_form_csrf_auth "$api_url"
+      ;;
     api)
       setup_api_auth "$api_url"
       ;;
@@ -39,7 +42,7 @@ setup_zap_auth() {
       setup_basic_auth "$api_url"
       ;;
     *)
-      log_error "Unknown auth type: ${ZAP_AUTH_TYPE} (use: form, api, http-basic, none)"
+      log_error "Unknown auth type: ${ZAP_AUTH_TYPE} (use: form, form-csrf, api, http-basic, none)"
       exit 1
       ;;
   esac
@@ -99,6 +102,85 @@ setup_form_auth() {
   zap_curl "${api_url}/JSON/authentication/action/login/?contextId=1&pollUrl=&pollData=" >/dev/null
 
   log_success "Form authentication configured"
+}
+
+# Form-based authentication with CSRF token support
+# Uses scriptBasedAuthentication to GET the login page, extract a CSRF token,
+# and POST credentials along with the token.
+setup_form_csrf_auth() {
+  local api_url="$1"
+  local encoded_login_url
+  encoded_login_url=$(urlencode "${ZAP_AUTH_LOGIN_URL}")
+
+  if [[ -z "$ZAP_AUTH_LOGIN_URL" ]] || [[ -z "$ZAP_AUTH_USERNAME" ]] || [[ -z "$ZAP_AUTH_PASSWORD" ]]; then
+    log_error "CSRF form auth requires: ZAP_AUTH_LOGIN_URL, ZAP_AUTH_USERNAME, ZAP_AUTH_PASSWORD"
+    exit 1
+  fi
+
+  local csrf_field="${ZAP_AUTH_CSRF_FIELD:-user_token}"
+
+  # Resolve script path relative to this file
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local script_file="${script_dir}/../zap/auth-csrf.js"
+
+  if [[ ! -f "${script_file}" ]]; then
+    log_error "CSRF auth script not found: ${script_file}"
+    exit 1
+  fi
+
+  # Create context
+  zap_curl "${api_url}/JSON/context/action/newContext/?contextName=dast" >/dev/null
+
+  # Include target URL in context
+  local encoded_target
+  encoded_target=$(urlencode "${TARGET_URL}")
+  zap_curl "${api_url}/JSON/context/action/includeInContext/?contextName=dast&regex=${encoded_target}.*" >/dev/null
+
+  # Build POST data template — placeholders ({%username%} etc.) survive URL encoding:
+  # urlencode encodes { } % → %7B %7D %25, ZAP decodes once → original literals,
+  # which match the .replace() calls in auth-csrf.js exactly.
+  local post_data="${ZAP_AUTH_USERNAME_FIELD}={%username%}&${ZAP_AUTH_PASSWORD_FIELD}={%password%}&${csrf_field}={%csrf_token%}"
+
+  # Load the script via ZAP API
+  local encoded_script
+  encoded_script=$(urlencode "$(cat "${script_file}")")
+  zap_curl "${api_url}/JSON/script/action/load/?scriptName=csrfAuth&scriptType=authentication&scriptEngine=Oracle%20Nashorn&scriptDescription=CSRF%20form%20auth&string=${encoded_script}" >/dev/null
+
+  # Set authentication method with parameters
+  local encoded_post_data
+  encoded_post_data=$(urlencode "${post_data}")
+  zap_curl "${api_url}/JSON/authentication/action/setAuthenticationMethod/?contextId=1&authMethodName=scriptBasedAuthentication&authMethodConfigParams=scriptName%3DcsrfAuth%26Login_URL%3D${encoded_login_url}%26CSRF_Field%3D${csrf_field}%26POST_Data%3D${encoded_post_data}" >/dev/null
+
+  # Set logged in/out indicators
+  if [[ -n "$ZAP_AUTH_LOGGED_IN_INDICATOR" ]]; then
+    local encoded_indicator
+    encoded_indicator=$(urlencode "${ZAP_AUTH_LOGGED_IN_INDICATOR}")
+    zap_curl "${api_url}/JSON/authentication/action/setLoggedInIndicator/?contextId=1&loggedInIndicatorRegex=${encoded_indicator}" >/dev/null
+  fi
+  if [[ -n "$ZAP_AUTH_LOGGED_OUT_INDICATOR" ]]; then
+    local encoded_indicator
+    encoded_indicator=$(urlencode "${ZAP_AUTH_LOGGED_OUT_INDICATOR}")
+    zap_curl "${api_url}/JSON/authentication/action/setLoggedOutIndicator/?contextId=1&loggedOutIndicatorRegex=${encoded_indicator}" >/dev/null
+  fi
+
+  # Create user
+  zap_curl "${api_url}/JSON/users/action/newUser/?contextId=1&name=scanner" >/dev/null
+
+  # Set credentials
+  local encoded_user
+  encoded_user=$(urlencode "${ZAP_AUTH_USERNAME}")
+  local encoded_pass
+  encoded_pass=$(urlencode "${ZAP_AUTH_PASSWORD}")
+  zap_curl "${api_url}/JSON/users/action/setAuthenticationCredentials/?contextId=1&userId=0&authCredentialsConfigParams=username=${encoded_user}&password=${encoded_pass}" >/dev/null
+
+  # Enable user
+  zap_curl "${api_url}/JSON/users/action/setUserEnabled/?contextId=1&userId=0&enabled=true" >/dev/null
+
+  # Force initial login
+  zap_curl "${api_url}/JSON/authentication/action/login/?contextId=1&pollUrl=&pollData=" >/dev/null
+
+  log_success "CSRF form authentication configured (field: ${csrf_field})"
 }
 
 # API token authentication
@@ -203,7 +285,7 @@ setup_basic_auth() {
   log_success "HTTP Basic authentication configured"
 }
 
-# URL encode helper
+# URL encode helper (safe for inputs containing single quotes and multiline)
 urlencode() {
-  python3 -c "import urllib.parse; print(urllib.parse.quote('$1', safe=''))"
+  printf '%s' "$1" | python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read(), safe=""))'
 }

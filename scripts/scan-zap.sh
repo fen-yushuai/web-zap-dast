@@ -229,10 +229,6 @@ parse_timeout() {
   echo $((t * 60))
 }
 
-urlencode() {
-  python3 -c "import urllib.parse; print(urllib.parse.quote('$1', safe=''))"
-}
-
 # --- Main ---
 main() {
   log_info "=== ZAP Scan (${SCAN_TYPE}) ==="

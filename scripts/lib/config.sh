@@ -24,18 +24,19 @@ ZAP_TIMEOUT="300m"
 ZAP_API_DOCS_URL=""
 
 # --- Authentication ---
-# 认证方式：form / api / http-basic / none
+# 认证方式：form / form-csrf / api / http-basic / none
 # 设为 none 或留空则不启用认证
 ZAP_AUTH_TYPE="none"
 
 # === Form-based Authentication（表单登录）===
 ZAP_AUTH_LOGIN_URL=""
-ZAP_AUTH_USERNAME_FIELD="login"
+ZAP_AUTH_USERNAME_FIELD="username"
 ZAP_AUTH_PASSWORD_FIELD="password"
 ZAP_AUTH_USERNAME=""
 ZAP_AUTH_PASSWORD=""
 ZAP_AUTH_LOGGED_IN_INDICATOR=""
 ZAP_AUTH_LOGGED_OUT_INDICATOR=""
+ZAP_AUTH_CSRF_FIELD="user_token"   # CSRF hidden input 的 name 属性
 
 # === API Authentication（API 接口登录）===
 ZAP_AUTH_API_URL=""

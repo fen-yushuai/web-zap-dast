@@ -171,13 +171,20 @@ ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"   # 登录失败后页面包含的文字
 > 已测试靶场：自建 PHP 表单登录应用（无 CSRF token）
 > 适用于无 CSRF token 保护的简单登录页
 
-**带 CSRF 的表单登录** ❌ 不支持：
+**带 CSRF 的表单登录** ✅ 已验证：
 ```bash
-# ZAP 内置表单认证不支持自动获取 CSRF token
-# 需使用 script-based authentication 或 browser-based authentication
-# 已知不支持的靶场：DVWA
+ZAP_AUTH_TYPE="form-csrf"
+ZAP_AUTH_LOGIN_URL="http://localhost:8080/login.php"
+ZAP_AUTH_USERNAME_FIELD="username"     # 表单中用户名字段的 name
+ZAP_AUTH_PASSWORD_FIELD="password"     # 表单中密码字段的 name
+ZAP_AUTH_CSRF_FIELD="user_token"       # CSRF hidden input 的 name
+ZAP_AUTH_USERNAME="admin"
+ZAP_AUTH_PASSWORD="password"
+ZAP_AUTH_LOGGED_IN_INDICATOR="You have logged in"
+ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"
 ```
-> 需要自定义脚本处理 CSRF token，或使用 ZAP 的浏览器认证模式
+> 已测试靶场：DVWA（带 CSRF token 保护的表单登录）
+> 使用 ZAP scriptBasedAuthentication，自动 GET 登录页提取 CSRF token 后 POST 登录
 
 **HTTP Basic 登录** ✅ 已验证：
 ```bash
