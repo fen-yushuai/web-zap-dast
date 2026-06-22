@@ -65,15 +65,7 @@ ZAP_SPIDER_AJAX_ENABLED=true
 ```
 > 已测试靶场：OWASP Juice Shop（Angular SPA），传统 19 URL + Ajax 发现共 75 URL
 
-### 场景 4：只看爬取结果（不做扫描）
-
-```bash
-./dast.sh --scan spider
-# 查看发现的 URL
-cat reports/<timestamp>/zap-spider-urls.txt
-```
-
-### 场景 5：需要登录的网站
+### 场景 4：需要登录的网站
 
 修改 `config.sh`，根据登录方式配置认证信息：
 
@@ -119,6 +111,7 @@ ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"
 ```
 > 已测试靶场：DVWA（带 CSRF token 保护的表单登录）
 > 使用 ZAP scriptBasedAuthentication，自动 GET 登录页提取 CSRF token 后 POST 登录
+> 如目标站点的 CSRF token 提取逻辑不同（如 meta tag、cookie 等），需修改 `scripts/zap/auth-csrf.js` 中的正则
 
 **HTTP Basic 登录** ✅ 已验证：
 ```bash
@@ -127,6 +120,14 @@ ZAP_AUTH_BASIC_USERNAME="admin"
 ZAP_AUTH_BASIC_PASSWORD="admin123"
 ```
 > 已测试靶场：httpbin（`/basic-auth/admin/password` 端点）
+
+### 场景 5：只看爬取结果（不做扫描）
+
+```bash
+./dast.sh --scan spider
+# 查看发现的 URL
+cat reports/<timestamp>/zap-spider-urls.txt
+```
 
 ### 场景 6：降低扫描速率（避免被封）
 
