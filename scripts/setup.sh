@@ -22,6 +22,14 @@ if ! docker info &>/dev/null; then
 fi
 log_success "Docker: $(docker --version)"
 
+# --- jq (required for urlencode and JSON parsing) ---
+log_info "Checking jq..."
+if ! check_command jq; then
+  log_error "jq not found. Install jq first."
+  exit 1
+fi
+log_success "jq: $(jq --version)"
+
 # --- ZAP (Docker) ---
 log_info "Pulling ZAP Docker image..."
 docker pull --platform "${DOCKER_PLATFORM}" "${ZAP_IMAGE}"
