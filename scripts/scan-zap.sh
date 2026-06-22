@@ -260,11 +260,11 @@ main() {
       echo "--- 按风险级别统计 ---"
       jq -r '
         [.alerts[]?] | group_by(.risk)
-        | map({risk: .[0].risk, count: length})
+        | map({risk: .[0].risk, types: (map(.name) | unique | length)})
         | sort_by(.risk)
         | .[]
-        | "\(.risk): \(.count)"
-      ' "${REPORT_JSON}" 2>/dev/null || echo "No alerts or parse error"
+        | "\(.risk): \(.types)"
+      ' "${REPORT_JSON}" 2>/dev/null || echo "无告警"
       echo ""
       echo "HTML 报告: ${REPORT_HTML}"
       echo "JSON 报告: ${REPORT_JSON}"
