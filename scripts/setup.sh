@@ -22,14 +22,6 @@ if ! docker info &>/dev/null; then
 fi
 log_success "Docker: $(docker --version)"
 
-# --- Python 3 (required for urlencode) ---
-log_info "Checking Python 3..."
-if ! check_command python3; then
-  log_error "python3 not found. Install Python 3 first."
-  exit 1
-fi
-log_success "Python: $(python3 --version)"
-
 # --- ZAP (Docker) ---
 log_info "Pulling ZAP Docker image..."
 docker pull --platform "${DOCKER_PLATFORM}" "${ZAP_IMAGE}"

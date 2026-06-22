@@ -284,7 +284,7 @@ setup_basic_auth() {
   log_success "HTTP Basic authentication configured"
 }
 
-# URL encode helper (safe for inputs containing single quotes and multiline)
+# URL encode helper (uses jq @uri, no python3 dependency)
 urlencode() {
-  printf '%s' "$1" | python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read(), safe=""))'
+  printf '%s' "$1" | jq -sRr '@uri'
 }
