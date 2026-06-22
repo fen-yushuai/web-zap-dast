@@ -193,7 +193,7 @@ zap_curl "${ZAP_API_BASE}/JSON/core/view/sitemap/" | jq -r '.siteList[]?' 2>/dev
   if [[ "$AJAX_ENABLED" == true ]]; then
     echo "Ajax spider:        ${AJAX_URLS} URLs"
   fi
-  echo "Total unique URLs:  ${TOTAL_URLS}"
+  echo "All URLs in ZAP session: ${TOTAL_URLS} (includes auth, redirects, resources)"
   echo ""
   echo "--- Configuration ---"
   echo "Max depth:      ${MAX_DEPTH}"
@@ -205,5 +205,5 @@ zap_curl "${ZAP_API_BASE}/JSON/core/view/sitemap/" | jq -r '.siteList[]?' 2>/dev
 } | tee "${SUMMARY_FILE}"
 
 log_success "=== Spider reconnaissance complete ==="
-log_success "Found ${TOTAL_URLS} unique URLs"
+log_success "Found ${TOTAL_URLS} URLs in ZAP session"
 log_success "Summary: ${SUMMARY_FILE}"
