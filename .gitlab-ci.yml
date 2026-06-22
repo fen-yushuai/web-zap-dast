@@ -1,0 +1,12 @@
+pages:
+  stage: deploy
+  tags:
+    - app04
+  script:
+    - mkdir -p public
+    - cp report-demo/20260622_115324/zap-report.html public/index.html
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
