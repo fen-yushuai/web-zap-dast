@@ -6,6 +6,8 @@
 
 - Docker 已安装并运行
 - 网络可访问 Docker Hub
+- 支持系统：macOS（Intel / Apple Silicon）、Linux（amd64 / arm64），Windows 需 WSL2
+- 已验证：macOS Apple Silicon（arm64）
 
 ## 快速开始
 
@@ -13,8 +15,8 @@
 # 1. 安装依赖（拉取 Docker 镜像）
 ./scripts/setup.sh
 
-# 2. 配置目标 URL
-#    编辑 config.sh，设置 TARGET_URL
+# 2. 配置扫描目标
+#    编辑 config.sh，参照下方「常见场景」配置
 
 # 3. 运行扫描
 ./dast.sh
