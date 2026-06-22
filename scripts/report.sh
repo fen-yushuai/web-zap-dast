@@ -31,7 +31,7 @@ log_info "Report dir: ${REPORT_DIR}"
   echo ""
   echo "- **日期**: $(date '+%Y-%m-%d %H:%M:%S')"
   echo "- **目标**: ${TARGET_URL}"
-  echo "- **目录**: ${REPORT_DIR}"
+  echo "- **目录**: ${REPORT_DIR#${PROJECT_ROOT}/}"
   echo ""
 
   # Spider section
