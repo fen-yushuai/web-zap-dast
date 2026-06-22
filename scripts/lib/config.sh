@@ -9,7 +9,7 @@ DOCKER_PLATFORM="linux/arm64"
 # --- Target ---
 # 扫描目标 URL，如 TARGET_URL="https://example.com"
 # Docker 容器内访问宿主机需用 host.docker.internal 代替 localhost
-TARGET_URL="http://host.docker.internal:8080"
+TARGET_URL="http://host.docker.internal:3000"
 
 # --- Paths ---
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -26,17 +26,17 @@ ZAP_API_DOCS_URL=""
 # --- Authentication ---
 # 认证方式：form / form-csrf / api / http-basic / none
 # 设为 none 或留空则不启用认证
-ZAP_AUTH_TYPE="form-csrf"
+ZAP_AUTH_TYPE="none"
 
 # === Form-based Authentication（表单登录）===
-ZAP_AUTH_LOGIN_URL="http://host.docker.internal:8080/login.php"
+ZAP_AUTH_LOGIN_URL=""
 ZAP_AUTH_USERNAME_FIELD="username"
 ZAP_AUTH_PASSWORD_FIELD="password"
-ZAP_AUTH_CSRF_FIELD="user_token"
-ZAP_AUTH_USERNAME="admin"
-ZAP_AUTH_PASSWORD="password"
-ZAP_AUTH_LOGGED_IN_INDICATOR="You have logged in"
-ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"
+ZAP_AUTH_USERNAME=""
+ZAP_AUTH_PASSWORD=""
+ZAP_AUTH_LOGGED_IN_INDICATOR=""
+ZAP_AUTH_LOGGED_OUT_INDICATOR=""
+ZAP_AUTH_CSRF_FIELD="user_token"   # CSRF hidden input 的 name 属性
 
 # === API Authentication（API 接口登录）===
 ZAP_AUTH_API_URL=""
