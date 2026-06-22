@@ -5,6 +5,7 @@
 ## 前置条件
 
 - Docker 已安装并运行
+- jq 已安装
 - 网络可访问 Docker Hub
 - 支持系统：macOS（Intel / Apple Silicon）、Linux（amd64 / arm64），Windows 需 WSL2
 - 已验证：macOS Apple Silicon（arm64）
