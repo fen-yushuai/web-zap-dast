@@ -137,7 +137,7 @@ while true; do
   sleep 5
 done
 
-TRADITIONAL_URLS=$(zap_curl "${ZAP_API_BASE}/JSON/spider/view/results/?scanId=${SPIDER_ID}" | jq -r '.results[]?' 2>/dev/null | wc -l | tr -d ' ')
+TRADITIONAL_URLS=$(zap_curl "${ZAP_API_BASE}/JSON/spider/view/results/?scanId=${SPIDER_ID}" | jq -r '.results[]?' 2>/dev/null | wc -l | tr -d ' ' || echo "0")
 log_success "Traditional spider found ${TRADITIONAL_URLS} URLs"
 
 # --- Run Ajax spider if enabled ---
@@ -166,7 +166,8 @@ if [[ "$AJAX_ENABLED" == true ]]; then
     sleep 5
   done
 
-  AJAX_URLS=$(zap_curl "${ZAP_API_BASE}/JSON/ajaxSpider/view/fullResults/" 2>/dev/null | jq -r '.fullResults[]?.url // empty' 2>/dev/null | wc -l | tr -d ' ')
+  AJAX_URLS=$(zap_curl "${ZAP_API_BASE}/JSON/ajaxSpider/view/fullResults/" 2>/dev/null | jq -r '.fullResults[]?.url // empty' 2>/dev/null | wc -l | tr -d ' ' || true)
+  AJAX_URLS="${AJAX_URLS:-0}"
   AJAX_URLS="${AJAX_URLS:-0}"
   log_success "Ajax spider found ${AJAX_URLS} URLs"
 fi
