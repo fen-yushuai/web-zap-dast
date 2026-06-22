@@ -69,12 +69,56 @@ ZAP_SPIDER_AJAX_ENABLED=true
 
 修改 `config.sh`，根据登录方式配置认证信息：
 
-**API Token 登录** ✅ 已验证（靶场：OWASP Juice Shop）：
+**1. API Token 登录**（`ZAP_AUTH_TYPE="api"`）
 ```bash
-# 启动靶场
-docker run -d --name juice-shop -p 3000:3000 bkimminich/juice-shop
+ZAP_AUTH_API_URL=""                   # 登录 API 地址
+ZAP_AUTH_API_BODY=""                  # POST body，用 __USERNAME__ / __PASSWORD__ 占位
+ZAP_AUTH_USERNAME=""                  # 用户名
+ZAP_AUTH_PASSWORD=""                  # 密码
+ZAP_AUTH_API_TOKEN_PATH=""            # token 在 JSON 响应中的路径
+ZAP_AUTH_API_TOKEN_LOCATION="header" # token 位置：header 或 cookie
+ZAP_AUTH_API_TOKEN_HEADER="Authorization"
+ZAP_AUTH_API_TOKEN_PREFIX="Bearer "
+```
 
-# config.sh
+**2. 简单表单登录**（`ZAP_AUTH_TYPE="form"`）
+```bash
+ZAP_AUTH_LOGIN_URL=""                 # 登录页地址
+ZAP_AUTH_USERNAME_FIELD="username"    # 表单中用户名字段的 name
+ZAP_AUTH_PASSWORD_FIELD="password"    # 表单中密码字段的 name
+ZAP_AUTH_USERNAME=""
+ZAP_AUTH_PASSWORD=""
+ZAP_AUTH_LOGGED_IN_INDICATOR=""       # 登录成功后页面包含的文字
+ZAP_AUTH_LOGGED_OUT_INDICATOR=""      # 登录失败后页面包含的文字
+```
+
+**3. 带 CSRF 的表单登录**（`ZAP_AUTH_TYPE="form-csrf"`）
+```bash
+ZAP_AUTH_LOGIN_URL=""                 # 登录页地址
+ZAP_AUTH_USERNAME_FIELD="username"
+ZAP_AUTH_PASSWORD_FIELD="password"
+ZAP_AUTH_CSRF_FIELD="user_token"     # CSRF hidden input 的 name
+ZAP_AUTH_USERNAME=""
+ZAP_AUTH_PASSWORD=""
+ZAP_AUTH_LOGGED_IN_INDICATOR=""
+ZAP_AUTH_LOGGED_OUT_INDICATOR=""
+```
+> 使用 ZAP scriptBasedAuthentication，自动 GET 登录页提取 CSRF token 后 POST 登录
+> 如目标站点的 CSRF token 提取逻辑不同（如 meta tag、cookie 等），需修改 `scripts/zap/auth-csrf.js` 中的正则
+
+**4. HTTP Basic 登录**（`ZAP_AUTH_TYPE="http-basic"`）
+```bash
+ZAP_AUTH_BASIC_USERNAME=""
+ZAP_AUTH_BASIC_PASSWORD=""
+```
+
+#### 已测试靶场
+
+**OWASP Juice Shop**（API Token 登录）
+```bash
+docker run -d --name juice-shop -p 3000:3000 bkimminich/juice-shop
+```
+```bash
 TARGET_URL="http://host.docker.internal:3000"
 ZAP_AUTH_TYPE="api"
 ZAP_AUTH_API_URL="http://host.docker.internal:3000/rest/user/login"
@@ -87,56 +131,36 @@ ZAP_AUTH_API_TOKEN_HEADER="Authorization"
 ZAP_AUTH_API_TOKEN_PREFIX="Bearer "
 ```
 
-**简单表单登录** ✅ 已验证（靶场：自建 PHP 应用）：
+**DVWA**（带 CSRF 的表单登录）
 ```bash
-# 适用于无 CSRF token 保护的简单登录页，需自行搭建测试应用
-# config.sh
-TARGET_URL="http://host.docker.internal:8080"
-ZAP_AUTH_TYPE="form"
-ZAP_AUTH_LOGIN_URL="http://host.docker.internal:8080/login"
-ZAP_AUTH_USERNAME_FIELD="login"         # 表单中用户名字段的 name
-ZAP_AUTH_PASSWORD_FIELD="password"      # 表单中密码字段的 name
-ZAP_AUTH_USERNAME="admin"
-ZAP_AUTH_PASSWORD="admin"
-ZAP_AUTH_LOGGED_IN_INDICATOR="Welcome"  # 登录成功后页面包含的文字
-ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"   # 登录失败后页面包含的文字
-```
-
-**带 CSRF 的表单登录** ✅ 已验证（靶场：DVWA）：
-```bash
-# 启动靶场（Apple Silicon 需加 --platform linux/amd64）
 docker run -d --name dvwa -p 8080:80 vulnerables/web-dvwa
-
+# Apple Silicon 需加 --platform linux/amd64
 # 浏览器访问 http://localhost:8080，点击 Create / Reset Database 初始化
 # 默认凭据：admin / password
-
-# config.sh
+```
+```bash
 TARGET_URL="http://host.docker.internal:8080"
 ZAP_AUTH_TYPE="form-csrf"
 ZAP_AUTH_LOGIN_URL="http://host.docker.internal:8080/login.php"
 ZAP_AUTH_USERNAME_FIELD="username"
 ZAP_AUTH_PASSWORD_FIELD="password"
-ZAP_AUTH_CSRF_FIELD="user_token"       # CSRF hidden input 的 name
+ZAP_AUTH_CSRF_FIELD="user_token"
 ZAP_AUTH_USERNAME="admin"
 ZAP_AUTH_PASSWORD="password"
 ZAP_AUTH_LOGGED_IN_INDICATOR="You have logged in"
 ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"
 ```
-> 使用 ZAP scriptBasedAuthentication，自动 GET 登录页提取 CSRF token 后 POST 登录
-> 如目标站点的 CSRF token 提取逻辑不同（如 meta tag、cookie 等），需修改 `scripts/zap/auth-csrf.js` 中的正则
 
-**HTTP Basic 登录** ✅ 已验证（靶场：httpbin）：
+**httpbin**（HTTP Basic 登录）
 ```bash
-# 启动靶场
 docker run -d --name httpbin -p 8080:80 kennethreitz/httpbin
-
-# config.sh
+```
+```bash
 TARGET_URL="http://host.docker.internal:8080"
 ZAP_AUTH_TYPE="http-basic"
 ZAP_AUTH_BASIC_USERNAME="admin"
 ZAP_AUTH_BASIC_PASSWORD="admin123"
 ```
-> 测试端点：`/basic-auth/admin/admin123`
 
 ### 场景 5：只看爬取结果（不做扫描）
 
