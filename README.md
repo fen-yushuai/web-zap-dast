@@ -1,4 +1,4 @@
-# DAST Pipeline
+# Web 应用安全扫描
 
 基于 OWASP ZAP 的动态应用安全测试平台，支持 Spider 爬取 + 主动扫描。
 
@@ -13,7 +13,11 @@
 ## 快速开始
 
 ```bash
-# 1. 安装依赖（拉取 Docker 镜像）
+# 1. 克隆代码
+git clone <仓库地址>
+cd web-zap-dast
+
+# 2. 安装依赖（拉取 Docker 镜像）
 ./scripts/setup.sh
 
 # 2. 配置扫描目标
