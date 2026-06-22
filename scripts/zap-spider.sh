@@ -99,7 +99,7 @@ setup_zap_auth "${ZAP_API_BASE}"
 
 # --- Access target URL first (required by ZAP) ---
 log_info "Accessing target URL to register with ZAP..."
-ENCODED_URL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ZAP_SPIDER_TARGET}', safe=''))")
+ENCODED_URL=$(urlencode "${ZAP_SPIDER_TARGET}")
 zap_curl "${ZAP_API_BASE}/JSON/core/action/accessUrl/?url=${ENCODED_URL}&followRedirects=true" >/dev/null
 
 # --- Run traditional spider ---
@@ -167,7 +167,6 @@ if [[ "$AJAX_ENABLED" == true ]]; then
   done
 
   AJAX_URLS=$(zap_curl "${ZAP_API_BASE}/JSON/ajaxSpider/view/fullResults/" 2>/dev/null | jq -r '.fullResults[]?.url // empty' 2>/dev/null | wc -l | tr -d ' ' || true)
-  AJAX_URLS="${AJAX_URLS:-0}"
   AJAX_URLS="${AJAX_URLS:-0}"
   log_success "Ajax spider found ${AJAX_URLS} URLs"
 fi

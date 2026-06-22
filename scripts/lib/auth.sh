@@ -209,8 +209,7 @@ setup_api_auth() {
   fi
 
   if [[ -z "$token" ]]; then
-    log_error "Failed to extract token from API response"
-    log_error "Response: ${response}"
+    log_error "Failed to extract token from API response (first 100 chars: ${response:0:100})"
     exit 1
   fi
 
