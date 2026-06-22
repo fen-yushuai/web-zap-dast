@@ -131,6 +131,24 @@ ZAP_AUTH_API_TOKEN_HEADER="Authorization"
 ZAP_AUTH_API_TOKEN_PREFIX="Bearer "
 ```
 
+**Simple Login**（简单表单登录）
+```bash
+docker build -t simple-login targets/simple-login/
+docker run -d --name simple-login -p 8081:80 simple-login
+# 默认凭据：admin / admin
+```
+```bash
+TARGET_URL="http://host.docker.internal:8081"
+ZAP_AUTH_TYPE="form"
+ZAP_AUTH_LOGIN_URL="http://host.docker.internal:8081/login.php"
+ZAP_AUTH_USERNAME_FIELD="username"
+ZAP_AUTH_PASSWORD_FIELD="password"
+ZAP_AUTH_USERNAME="admin"
+ZAP_AUTH_PASSWORD="admin"
+ZAP_AUTH_LOGGED_IN_INDICATOR="You have logged in"
+ZAP_AUTH_LOGGED_OUT_INDICATOR="Login"
+```
+
 **DVWA**（带 CSRF 的表单登录）
 ```bash
 docker run -d --name dvwa -p 8080:80 vulnerables/web-dvwa
