@@ -20,63 +20,6 @@
 ./dast.sh
 ```
 
-## 命令说明
-
-### `dast.sh` — 主入口
-
-```bash
-./dast.sh                    # 完整流程（Spider 爬取 + ZAP 扫描）
-./dast.sh --setup            # 仅安装依赖
-./dast.sh --scan spider      # 仅运行 Spider 爬取（网站认知）
-./dast.sh --scan zap         # 仅运行 ZAP 扫描
-./dast.sh --report-only DIR  # 从已有扫描数据重新生成报告
-```
-
-### `scripts/zap-spider.sh` — Spider 爬取
-
-先爬取目标网站，发现所有可访问的 URL，再交给 ZAP 扫描。
-
-```bash
-./scripts/zap-spider.sh                        # 默认配置爬取
-./scripts/zap-spider.sh --max-duration 10      # 爬取 10 分钟
-./scripts/zap-spider.sh --max-depth 10         # 最大深度 10 层
-./scripts/zap-spider.sh --ajax                 # 启用 Ajax Spider（SPA 需要）
-```
-
-输出：
-- `zap-spider-urls.txt` — 发现的所有 URL（每行一个）
-- `zap-sitemap.txt` — 站点树结构
-- `zap-spider-summary.txt` — 爬取统计摘要
-
-### `scripts/scan-zap.sh` — ZAP 扫描
-
-```bash
-./scripts/scan-zap.sh                    # full scan（爬取 + 主动扫描）
-./scripts/scan-zap.sh --scan-type api    # API scan（需 OpenAPI 文档）
-./scripts/scan-zap.sh --min-alert INFO   # 包含 INFO 级别
-./scripts/scan-zap.sh --timeout 60m      # 限制扫描时间
-```
-
-扫描类型：
-- **full** — 传统爬虫 + 主动扫描，覆盖 UI 和 API，耗时长
-- **api** — 直接读 OpenAPI/Swagger 文档，快速精准，30 秒左右
-
-## 扫描流程
-
-```
-Target URL
-    │
-    ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Spider    │────▶│  ZAP Scan   │────▶│   Report    │
-│  爬取发现   │     │  主动扫描   │     │  汇总报告   │
-└─────────────┘     └─────────────┘     └─────────────┘
-```
-
-1. **Spider 阶段**：爬取目标网站，发现所有可访问的 URL 和站点结构
-2. **Scan 阶段**：对发现的 URL 进行主动安全扫描（XSS、SQL 注入、CSRF 等）
-3. **Report 阶段**：汇总扫描结果，生成 HTML/JSON/XML 报告
-
 ## 常见场景
 
 ### 场景 1：扫描有 OpenAPI 文档的 API ✅ 已验证
@@ -194,6 +137,63 @@ ZAP_AUTH_BASIC_PASSWORD="admin123"
 ```
 > 已测试靶场：httpbin（`/basic-auth/admin/password` 端点）
 
+## 命令说明
+
+### `dast.sh` — 主入口
+
+```bash
+./dast.sh                    # 完整流程（Spider 爬取 + ZAP 扫描）
+./dast.sh --setup            # 仅安装依赖
+./dast.sh --scan spider      # 仅运行 Spider 爬取（网站认知）
+./dast.sh --scan zap         # 仅运行 ZAP 扫描
+./dast.sh --report-only DIR  # 从已有扫描数据重新生成报告
+```
+
+### `scripts/zap-spider.sh` — Spider 爬取
+
+先爬取目标网站，发现所有可访问的 URL，再交给 ZAP 扫描。
+
+```bash
+./scripts/zap-spider.sh                        # 默认配置爬取
+./scripts/zap-spider.sh --max-duration 10      # 爬取 10 分钟
+./scripts/zap-spider.sh --max-depth 10         # 最大深度 10 层
+./scripts/zap-spider.sh --ajax                 # 启用 Ajax Spider（SPA 需要）
+```
+
+输出：
+- `zap-spider-urls.txt` — 发现的所有 URL（每行一个）
+- `zap-sitemap.txt` — 站点树结构
+- `zap-spider-summary.txt` — 爬取统计摘要
+
+### `scripts/scan-zap.sh` — ZAP 扫描
+
+```bash
+./scripts/scan-zap.sh                    # full scan（爬取 + 主动扫描）
+./scripts/scan-zap.sh --scan-type api    # API scan（需 OpenAPI 文档）
+./scripts/scan-zap.sh --min-alert INFO   # 包含 INFO 级别
+./scripts/scan-zap.sh --timeout 60m      # 限制扫描时间
+```
+
+扫描类型：
+- **full** — 传统爬虫 + 主动扫描，覆盖 UI 和 API，耗时长
+- **api** — 直接读 OpenAPI/Swagger 文档，快速精准，30 秒左右
+
+## 扫描流程
+
+```
+Target URL
+    │
+    ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Spider    │────▶│  ZAP Scan   │────▶│   Report    │
+│  爬取发现   │     │  主动扫描   │     │  汇总报告   │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+
+1. **Spider 阶段**：爬取目标网站，发现所有可访问的 URL 和站点结构
+2. **Scan 阶段**：对发现的 URL 进行主动安全扫描（XSS、SQL 注入、CSRF 等）
+3. **Report 阶段**：汇总扫描结果，生成 HTML/JSON/XML 报告
+
 ## 报告
 
 扫描完成后，报告保存在 `reports/<timestamp>/` 目录：
@@ -230,11 +230,12 @@ ZAP_SPIDER_AJAX_ENABLED=false # 是否启用 Ajax Spider（SPA 页面需要）
 ZAP_SPIDER_AJAX_MAX_DURATION=5 # Ajax Spider 最大时长（分钟）
 
 # 认证（详见"场景 6"）
-ZAP_AUTH_TYPE="none"          # form / api / http-basic / none
+ZAP_AUTH_TYPE="none"          # form / form-csrf / api / http-basic / none
 # 表单登录相关
 ZAP_AUTH_LOGIN_URL=""
 ZAP_AUTH_USERNAME=""
 ZAP_AUTH_PASSWORD=""
+ZAP_AUTH_CSRF_FIELD="user_token"  # CSRF hidden input 的 name（form-csrf 用）
 # API 登录相关
 ZAP_AUTH_API_URL=""
 ZAP_AUTH_API_BODY=""
