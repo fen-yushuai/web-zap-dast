@@ -38,7 +38,7 @@ log_info "Report dir: ${REPORT_DIR}"
   echo "## Spider 爬取结果"
   echo ""
   if [[ -f "${REPORT_DIR}/zap-spider-summary.txt" ]]; then
-    sed -n '/^--- Results ---$/,/^--- Configuration ---$/p' "${REPORT_DIR}/zap-spider-summary.txt" | grep -v "^---" | grep -v "^$" || echo "无结果"
+    sed -n '/^--- 结果 ---$/,/^--- 配置 ---$/p' "${REPORT_DIR}/zap-spider-summary.txt" | grep -v "^---" | grep -v "^$" || echo "无结果"
   else
     echo "_未运行 Spider 或无结果_"
   fi
@@ -48,7 +48,7 @@ log_info "Report dir: ${REPORT_DIR}"
   echo "## ZAP 扫描发现"
   echo ""
   if [[ -f "${REPORT_DIR}/zap-summary.txt" ]]; then
-    sed -n '/Alerts by Risk Level/,/^$/p' "${REPORT_DIR}/zap-summary.txt" | grep -v "Alerts by Risk Level" | grep -v "^$" || echo "无告警"
+    sed -n '/按风险级别统计/,/^$/p' "${REPORT_DIR}/zap-summary.txt" | grep -v "按风险级别统计" | grep -v "^---" | grep -v "^$" || echo "无告警"
     echo ""
     echo "完整报告: \`zap-report.html\` / \`zap-report.json\`"
   else
