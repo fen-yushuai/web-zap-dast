@@ -1,0 +1,15 @@
+=== ZAP Spider 爬取汇总 ===
+目标:           http://host.docker.internal:8080
+日期:           2026-06-22 11:53:47
+
+--- 结果 ---
+传统 Spider:      8 URLs
+ZAP 会话全部 URL: 11（含认证、重定向、资源）
+
+--- 配置 ---
+最大深度:     5
+最大时长:     5 分钟
+Ajax Spider:  false
+
+URL 列表: zap-spider-urls.txt
+站点树:   zap-sitemap.txt

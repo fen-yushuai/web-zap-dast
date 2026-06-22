@@ -259,7 +259,9 @@ Target URL
 
 ## 报告
 
-扫描完成后，报告保存在 `reports/<timestamp>/` 目录：
+扫描完成后，报告保存在 `reports/<timestamp>/` 目录。
+
+> 示例报告见 `report-demo/` 目录（DVWA 靶场的扫描结果）。
 
 ```
 reports/20260610_160214/
